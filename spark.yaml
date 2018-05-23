@@ -15,7 +15,7 @@
       - name: Download Apache Spark archive
         get_url:
           url: "{{ apache_spark_tar_archive }}"
-          dest: /home/vagrant
+          dest: "/home/vagrant/{{ apache_spark_tar_archive | basename }}"
         become: no
 
       - name:
@@ -44,4 +44,13 @@
           - { "regexp": "^export SPARK_HOME=", "line": "export SPARK_HOME=/opt/apache-spark" }
           - { "regexp": '^export PATH=\$PATH:\$SPARK_HOME/bin', "line": "export PATH=$PATH:$SPARK_HOME/bin" }
 
-        
+      - name: Ensure  log4j.properties exists
+        command: cp /opt/apache-spark/conf/log4j.properties.template /opt/apache-spark/conf/log4j.properties
+        args:
+          creates: /opt/apache-spark/conf/log4j.properties
+
+      - name: Ensure logging level for Spark is set to ERROR
+        lineinfile:
+          path: /opt/apache-spark/conf/log4j.properties
+          regexp: "^log4j.rootCategory="
+          line: "log4j.rootCategory=ERROR, console"
