@@ -1,0 +1,47 @@
+---
+  - hosts: all
+    gather_facts: yes
+    become: yes
+    vars:
+      apache_spark_tar_archive: http://www-us.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+
+      additional_packages: [ "curl",
+                             "gpgme",
+                             "epel-release",
+                             "centos-release-scl" ]
+
+    tasks:
+
+      - name: Download Apache Spark archive
+        get_url:
+          url: "{{ apache_spark_tar_archive }}"
+          dest: /home/vagrant
+        become: no
+
+      - name:
+        unarchive:
+          src: "/home/vagrant/{{ apache_spark_tar_archive | basename }}"
+          dest: /home/vagrant
+          remote_src: yes
+          creates: /home/vagrant/spark-2.3.0-bin-hadoop2.7
+
+      - name: Ensure /opt/apache-spark exists
+        file:
+          path: /opt/apache-spark
+          state: directory
+
+      - name: Move Apache files to /opt/apache-spark
+        shell: mv /home/vagrant/spark-2.3.0-bin-hadoop2.7/* /opt/apache-spark/
+        args:
+          creates: /opt/apache-spark/README.md
+
+      - name: Ensure .bash_profile is correctly setup for Spark
+        lineinfile:
+          path: /home/vagrant/.bash_profile
+          regexp: "{{ item['regexp'] }}"
+          line: "{{ item['line'] }}"
+        with_items:
+          - { "regexp": "^export SPARK_HOME=", "line": "export SPARK_HOME=/opt/apache-spark" }
+          - { "regexp": '^export PATH=\$PATH:\$SPARK_HOME/bin', "line": "export PATH=$PATH:$SPARK_HOME/bin" }
+
+        
