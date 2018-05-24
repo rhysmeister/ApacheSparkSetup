@@ -54,3 +54,9 @@
           path: /opt/apache-spark/conf/log4j.properties
           regexp: "^log4j.rootCategory="
           line: "log4j.rootCategory=ERROR, console"
+
+      - name: Checkout tutorial project
+        git:
+          repo: https://github.com/jleetutorial/python-spark-tutorial.git
+          dest: /home/vagrant/python-spark-tutorial/
+        become: no
