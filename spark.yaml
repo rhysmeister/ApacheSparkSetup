@@ -8,9 +8,15 @@
       additional_packages: [ "curl",
                              "gpgme",
                              "epel-release",
-                             "centos-release-scl" ]
+                             "centos-release-scl",
+                             "git" ]
 
     tasks:
+
+      - name: Ensure additional packages are installed
+        yum:
+          name: "{{ additional_packages }}"
+          state: installed
 
       - name: Download Apache Spark archive
         get_url:
