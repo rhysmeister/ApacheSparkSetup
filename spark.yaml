@@ -63,6 +63,6 @@
 
       - name: Checkout tutorial project
         git:
-          repo: https://github.com/jleetutorial/python-spark-tutorial.git
+          repo: https://github.com/rhysmeister/python-spark-tutorial.git
           dest: /home/vagrant/python-spark-tutorial/
         become: no

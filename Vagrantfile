@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
   end
 
  system("mkdir -p vm_vagrant_home")
- config.vm.synced_folder "vm_vagrant_home/", "/home/vagrant"
+ #config.vm.synced_folder "vm_vagrant_home/", "/home/vagrant"
 
  config.vm.provision :ansible do |ansible|
    ansible.playbook = "spark.yaml"
