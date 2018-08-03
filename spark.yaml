@@ -3,20 +3,35 @@
     gather_facts: yes
     become: yes
     vars:
-      apache_spark_tar_archive: http://www-us.apache.org/dist/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
+      apache_spark_tar_archive: http://www-us.apache.org/dist/spark/spark-2.3.1/spark-2.3.1-bin-hadoop2.7.tgz
 
       additional_packages: [ "curl",
                              "gpgme",
-                             "epel-release",
                              "centos-release-scl",
-                             "git" ]
+                             "git",
+                             "python2-pip" ]
+
+      python_packages: [
+          "numpy",
+          "scipy",
+          "pandas",
+          "sympy",
+          "nose",
+          "py4j",
+          "pyspark"
+      ]
 
     tasks:
+
+      - name: Ensure epel is available
+        yum:
+          name: "epel-release"
+          state: present
 
       - name: Ensure additional packages are installed
         yum:
           name: "{{ additional_packages }}"
-          state: installed
+          state: present
 
       - name: Download Apache Spark archive
         get_url:
@@ -29,7 +44,7 @@
           src: "/home/vagrant/{{ apache_spark_tar_archive | basename }}"
           dest: /home/vagrant
           remote_src: yes
-          creates: /home/vagrant/spark-2.3.0-bin-hadoop2.7
+          creates: "/home/vagrant/{{ apache_spark_tar_archive | basename | replace('.tgz', '') }}"
 
       - name: Ensure /opt/apache-spark exists
         file:
@@ -37,7 +52,7 @@
           state: directory
 
       - name: Move Apache files to /opt/apache-spark
-        shell: mv /home/vagrant/spark-2.3.0-bin-hadoop2.7/* /opt/apache-spark/
+        shell: "mv /home/vagrant/{{ apache_spark_tar_archive | basename | replace('.tgz', '') }}/* /opt/apache-spark/"
         args:
           creates: /opt/apache-spark/README.md
 
@@ -66,3 +81,10 @@
           repo: https://github.com/rhysmeister/python-spark-tutorial.git
           dest: /home/vagrant/python-spark-tutorial/
         become: no
+
+      - name: Ensure Python Packages are installed
+        pip:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - "{{ python_packages }}"
