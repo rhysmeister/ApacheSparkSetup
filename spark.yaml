@@ -20,8 +20,42 @@
           "py4j",
           "pyspark"
       ]
+      # Java installation vars
+      download_url: http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/jdk-8u181-linux-x64.tar.gz
+      download_folder: /opt
+      java_name: "{{download_folder}}/jdk1.8.0_05"
+      java_archive: "{{download_folder}}/jdk-8u181-linux-x64.tar.gz"
 
     tasks:
+
+      - name: Ensure wget is installed
+        yum:
+          name: wget
+          state: present
+
+      - name: Download Java
+        command: "wget -q -O {{java_archive}} --no-check-certificate --no-cookies --header 'Cookie: oraclelicense=accept-securebackup-cookie' {{download_url}} creates={{java_archive}}"
+        args:
+          creates:
+            jdk.installed
+
+      - name: Unpack archive
+        command: "tar -zxf {{java_archive}} -C {{download_folder}}"
+        args:
+          creates:
+            jdk.installed
+
+      - name: Fix ownership
+        file: state=directory path={{java_name}} owner=root group=root recurse=yes
+
+      - name: Make Java available for system
+        shell: 'alternatives --install "/usr/bin/java" "java" "{{java_name}}/bin/java" 2000 && touch jdk.installed'
+        args:
+          creates:
+            jdk.installed
+
+      - name: Clean up
+        file: state=absent path={{java_archive}}
 
       - name: Ensure epel is available
         yum:
@@ -63,7 +97,8 @@
           line: "{{ item['line'] }}"
         with_items:
           - { "regexp": "^export SPARK_HOME=", "line": "export SPARK_HOME=/opt/apache-spark" }
-          - { "regexp": '^export PATH=\$PATH:\$SPARK_HOME/bin', "line": "export PATH=$PATH:$SPARK_HOME/bin" }
+          - { "regexp": '^export PATH=\$PATH:\$SPARK_HOME/bin:/opt/jdk1.8.0_181/bin/', "line": "export PATH=$PATH:$SPARK_HOME/bin:/opt/jdk1.8.0_181/bin/" }
+          - { "regexp": '^export JAVA_HOME=', "line": "export JAVA_HOME=/opt/jdk1.8.0_181/" }
 
       - name: Ensure  log4j.properties exists
         command: cp /opt/apache-spark/conf/log4j.properties.template /opt/apache-spark/conf/log4j.properties
