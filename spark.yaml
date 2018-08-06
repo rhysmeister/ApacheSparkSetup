@@ -3,6 +3,7 @@
     gather_facts: yes
     become: yes
     vars:
+
       apache_spark_tar_archive: http://www-us.apache.org/dist/spark/spark-2.3.1/spark-2.3.1-bin-hadoop2.7.tgz
 
       additional_packages: [ "curl",
@@ -36,23 +37,20 @@
       - name: Download Java
         command: "wget -q -O {{java_archive}} --no-check-certificate --no-cookies --header 'Cookie: oraclelicense=accept-securebackup-cookie' {{download_url}} creates={{java_archive}}"
         args:
-          creates:
-            jdk.installed
+          creates: /root/jdk.installed
 
       - name: Unpack archive
         command: "tar -zxf {{java_archive}} -C {{download_folder}}"
         args:
-          creates:
-            jdk.installed
+          creates: /root/jdk.installed
 
       - name: Fix ownership
         file: state=directory path={{java_name}} owner=root group=root recurse=yes
 
       - name: Make Java available for system
-        shell: 'alternatives --install "/usr/bin/java" "java" "{{java_name}}/bin/java" 2000 && touch jdk.installed'
+        shell: 'alternatives --install "/usr/bin/java" "java" "{{java_name}}/bin/java" 2000 && touch /root/jdk.installed'
         args:
-          creates:
-            jdk.installed
+          creates: /root/jdk.installed
 
       - name: Clean up
         file: state=absent path={{java_archive}}
@@ -116,10 +114,3 @@
           repo: https://github.com/rhysmeister/python-spark-tutorial.git
           dest: /home/vagrant/python-spark-tutorial/
         become: no
-
-      - name: Ensure Python Packages are installed
-        pip:
-          name: "{{ item }}"
-          state: present
-        with_items:
-          - "{{ python_packages }}"
