@@ -9,8 +9,7 @@
       additional_packages: [ "curl",
                              "gpgme",
                              "centos-release-scl",
-                             "git",
-                             "python2-pip" ]
+                             "git" ]
 
       python_packages: [
           "numpy",
@@ -65,6 +64,11 @@
           name: "{{ additional_packages }}"
           state: present
 
+      - name: Ensure python36 is installed
+        yum:
+          name: rh-python36
+          state: present
+
       - name: Download Apache Spark archive
         get_url:
           url: "{{ apache_spark_tar_archive }}"
@@ -97,11 +101,22 @@
           - { "regexp": "^export SPARK_HOME=", "line": "export SPARK_HOME=/opt/apache-spark" }
           - { "regexp": '^export PATH=\$PATH:\$SPARK_HOME/bin:/opt/jdk1.8.0_181/bin/', "line": "export PATH=$PATH:$SPARK_HOME/bin:/opt/jdk1.8.0_181/bin/" }
           - { "regexp": '^export JAVA_HOME=', "line": "export JAVA_HOME=/opt/jdk1.8.0_181/" }
+          - { "regexp": '^export PYSPARK_PYTHON=', "line": "export PYSPARK_PYTHON=/opt/rh/rh-python36/root/usr/bin/python3.6" }
+          - { "regexp": '^alias python=', "line": 'alias python=/opt/rh/rh-python36/root/usr/bin/python3.6' }
+          - { "regexp": '^alias pip=', "line": 'alias pip=/opt/rh/rh-python36/root/usr/bin/pip3.6' }
 
       - name: Ensure  log4j.properties exists
         command: cp /opt/apache-spark/conf/log4j.properties.template /opt/apache-spark/conf/log4j.properties
         args:
           creates: /opt/apache-spark/conf/log4j.properties
+
+      - name: Ensure python packages are installed
+        pip:
+          name: "{{ item }}"
+          state: present
+          executable: /opt/rh/rh-python36/root/usr/bin/pip3.6
+        with_items:
+          - "{{ python_packages }}"
 
       - name: Ensure logging level for Spark is set to ERROR
         lineinfile:
